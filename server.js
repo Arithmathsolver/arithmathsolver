@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve frontend static files
-app.use(express.static('public')); // Add this line to serve frontend
+app.use(express.static('public'));
 
 // File storage config
 const storage = multer.diskStorage({
@@ -24,7 +24,7 @@ const upload = multer({ storage });
 
 // Home route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html')); // Serve the index.html file
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Solve math from text
