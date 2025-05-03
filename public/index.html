@@ -1,29 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Math Solver Website</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Math Solver</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>Math Problem Solver</h1>
-
-  <div class="input-area">
-    <textarea id="math-input" placeholder="Type your math problem here..."></textarea>
-
-    <div class="upload-section">
-      <button id="upload-btn" class="upload-btn">Upload Image</button>
-      <input type="file" id="image-input" accept="image/*" style="display: none;">
+    <div class="container">
+        <header>
+            <h1>Advanced Math Problem Solver</h1>
+            <p>Solve arithmetic problems and word problems with step-by-step solutions</p>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="text">Text Input</button>
+            <button class="tab-btn" data-tab="image">Image Upload</button>
+        </div>
+        
+        <div id="text-tab" class="tab-content active">
+            <textarea id="math-input" placeholder="Enter math problem (e.g., '2+2' or 'what is 5 plus 3')"></textarea>
+            <button id="solve-btn" class="primary-btn">Solve</button>
+        </div>
+        
+        <div id="image-tab" class="tab-content">
+            <div class="upload-container">
+                <input type="file" id="image-input" accept="image/*">
+                <label for="image-input" class="upload-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+                        <line x1="16" y1="5" x2="22" y2="5"></line>
+                        <line x1="19" y1="2" x2="19" y2="8"></line>
+                        <circle cx="9" cy="9" r="2"></circle>
+                        <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                    </svg>
+                    Upload Math Problem Image
+                </label>
+                <div class="preview" id="image-preview"></div>
+            </div>
+        </div>
+        
+        <div class="result-container">
+            <h2>Solution</h2>
+            <div id="result" class="result-box"></div>
+            <div class="steps-header">Step-by-Step Solution</div>
+            <div id="steps" class="steps-box"></div>
+        </div>
     </div>
-
-    <button id="solve-btn">Solve Problem</button>
-  </div>
-
-  <div class="output-area" id="result">
-    <!-- Solution will appear here -->
-  </div>
-
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
-</html>
+                      </html>
