@@ -1,35 +1,60 @@
-
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
+const cors = require('cors');
+const Tesseract = require('tesseract.js');
+const fs = require('fs');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-// Configure multer for file uploads
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// File storage config
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Root route to handle GET requests
+// Home route
 app.get('/', (req, res) => {
-  res.send('Server is up and running!');
+    res.send('Math Solver Backend Running');
 });
 
-// Route to handle file uploads
-app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('No file uploaded.');
-  }
-  res.send(`File uploaded successfully: ${req.file.filename}`);
+// Solve math from text
+app.post('/solve', (req, res) => {
+    const { problem } = req.body;
+    try {
+        const result = eval(problem);
+        res.json({ solution: result });
+    } catch (error) {
+        res.json({ error: 'Invalid math expression.' });
+    }
 });
 
-// Start the server
+// Solve math from image
+app.post('/solve-image', upload.single('image'), (req, res) => {
+    if (!req.file) return res.json({ error: 'No image uploaded.' });
+
+    const imagePath = req.file.path;
+
+    Tesseract.recognize(imagePath, 'eng')
+        .then(({ data: { text } }) => {
+            try {
+                const cleaned = text.replace(/[^\d+\-*/().]/g, '').trim();
+                const result = eval(cleaned);
+                res.json({ solution: result });
+            } catch {
+                res.json({ error: 'Could not solve the extracted math.' });
+            }
+        })
+        .catch(() => res.json({ error: 'OCR failed.' }))
+        .finally(() => fs.unlinkSync(imagePath));
+});
+
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
