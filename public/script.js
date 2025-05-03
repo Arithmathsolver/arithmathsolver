@@ -1,7 +1,5 @@
-
 document.getElementById('solve-btn').addEventListener('click', async () => {
   const input = document.getElementById('math-input').value.trim();
-
   if (!input) return alert('Please enter a math problem');
 
   const response = await fetch('/solve', {
@@ -11,7 +9,13 @@ document.getElementById('solve-btn').addEventListener('click', async () => {
   });
 
   const data = await response.json();
-  document.getElementById('result').innerText = data.solution || data.error;
+  document.getElementById('result').innerText = data.solution
+    ? `Answer: ${data.solution}`
+    : `Error: ${data.error}`;
+});
+
+document.getElementById('upload-btn').addEventListener('click', () => {
+  document.getElementById('image-input').click();
 });
 
 document.getElementById('image-input').addEventListener('change', async (event) => {
@@ -27,5 +31,7 @@ document.getElementById('image-input').addEventListener('change', async (event) 
   });
 
   const data = await response.json();
-  document.getElementById('result').innerText = data.solution || data.error;
+  document.getElementById('result').innerText = data.solution
+    ? `Answer: ${data.solution}`
+    : `Error: ${data.error}`;
 });
