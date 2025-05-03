@@ -1,10 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const multer = require('multer');
-const tesseract = require('tesseract.js');
-const math = require('mathjs');
-
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const multer = require("multer");
+const tesseract = require("tesseract.js");
+const math = require("mathjs");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -15,75 +14,123 @@ app.use(bodyParser.json());
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Normalize expression by replacing × and ÷
-function normalizeMathExpression(expr) {
-  return expr
-    .replace(/×/g, '*')
-    .replace(/÷/g, '/');
+// Function to convert word problems to math expressions
+function convertWordProblemToMath(problem) {
+    // Simple conversions (you can expand this)
+    problem = problem.toLowerCase()
+        .replace(/plus/g, '+')
+        .replace(/minus/g, '-')
+        .replace(/times|multiplied by/g, '*')
+        .replace(/divided by/g, '/')
+        .replace(/what is|calculate|find/g, '')
+        .replace(/\?/g, '');
+    return problem.trim();
 }
 
-// Route to handle solving math expressions
+// Route to handle solving math expressions with steps
 app.post('/solve', (req, res) => {
-  try {
-    let expression = req.body.expression;
-    expression = normalizeMathExpression(expression);
-    const result = math.evaluate(expression);
-    res.json({ result });
-  } catch (error) {
-    res.status(400).json({ error: 'Invalid math expression.' });
-  }
+    try {
+        let expression = req.body.expression;
+        
+        // Check if it's a word problem
+        if (/[a-zA-Z]/.test(expression)) {
+            expression = convertWordProblemToMath(expression);
+        }
+        
+        // Get step-by-step solution
+        const steps = [];
+        const node = math.parse(expression);
+        steps.push(`Original expression: ${expression}`);
+        steps.push(`Parsed expression: ${node.toString()}`);
+        
+        const simplified = math.simplify(node);
+        steps.push(`Simplified form: ${simplified.toString()}`);
+        
+        const result = math.evaluate(expression);
+        steps.push(`Final result: ${result}`);
+        
+        res.json({ result, steps });
+    } catch (error) {
+        res.status(400).json({ error: 'Invalid math expression.' });
+    }
 });
 
 // Route to handle image uploads and extract math expression
 app.post('/upload', upload.single('image'), async (req, res) => {
-  try {
-    const { buffer } = req.file;
-    const result = await tesseract.recognize(buffer, 'eng');
-    const text = result.data.text.trim();
-    const normalized = normalizeMathExpression(text);
-    const answer = math.evaluate(normalized);
-    res.json({ extracted: text, result: answer });
-  } catch (error) {
-    res.status(400).json({ error: 'Could not solve the extracted math.' });
-  }
+    try {
+        const { buffer } = req.file;
+        const result = await tesseract.recognize(buffer, 'eng');
+        const text = result.data.text.trim();
+        
+        let expression = text;
+        if (/[a-zA-Z]/.test(text)) {
+            expression = convertWordProblemToMath(text);
+        }
+        
+        const node = math.parse(expression);
+        const simplified = math.simplify(node);
+        const answer = math.evaluate(expression);
+        
+        res.json({ 
+            extracted: text, 
+            result: answer,
+            steps: [
+                `Extracted text: ${text}`,
+                `Converted expression: ${expression}`,
+                `Parsed expression: ${node.toString()}`,
+                `Simplified form: ${simplified.toString()}`,
+                `Final result: ${answer}`
+            ]
+        });
+    } catch (error) {
+        res.status(400).json({ error: 'Could not solve the extracted math.' });
+    }
 });
 
-// Route to serve frontend form
+// Serve frontend
 app.get('/', (req, res) => {
-  res.send(`
+    res.send(`
+    <!DOCTYPE html>
     <html>
-      <body style="font-family: Arial; padding: 20px;">
-        <h2>Upload Math Expression Image</h2>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-          <input type="file" name="image" required />
-          <button type="submit">Solve</button>
-        </form>
-        <br />
-        <h2>Solve via Text</h2>
-        <form id="textForm">
-          <input type="text" id="expression" placeholder="e.g. 12 × 4" required />
-          <button type="submit">Solve</button>
-        </form>
-        <div id="result"></div>
-        <script>
-          const form = document.getElementById('textForm');
-          form.onsubmit = async (e) => {
-            e.preventDefault();
-            const expression = document.getElementById('expression').value;
-            const res = await fetch('/solve', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ expression })
-            });
-            const data = await res.json();
-            document.getElementById('result').innerText = 'Result: ' + (data.result ?? data.error);
-          };
-        </script>
-      </body>
+    <head>
+        <title>Advanced Math Solver</title>
+        <link rel="stylesheet" href="/styles.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Advanced Math Problem Solver</h1>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="text">Text Input</button>
+                <button class="tab-btn" data-tab="image">Image Upload</button>
+            </div>
+            
+            <div id="text-tab" class="tab-content active">
+                <textarea id="math-input" placeholder="Enter math problem (e.g., '2+2' or 'what is 5 plus 3')"></textarea>
+                <button id="solve-btn">Solve</button>
+            </div>
+            
+            <div id="image-tab" class="tab-content">
+                <div class="upload-container">
+                    <input type="file" id="image-input" accept="image/*">
+                    <label for="image-input" class="upload-btn">Choose Image</label>
+                </div>
+            </div>
+            
+            <div class="result-container">
+                <h2>Solution</h2>
+                <div id="result"></div>
+                <div id="steps"></div>
+            </div>
+        </div>
+        <script src="/script.js"></script>
+    </body>
     </html>
-  `);
+    `);
 });
+
+// Serve static files
+app.use(express.static('public'));
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+    console.log(`Server running on port ${port}`);
 });
