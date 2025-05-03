@@ -48,6 +48,42 @@ app.post('/upload', upload.single('image'), async (req, res) => {
   }
 });
 
+// Route to serve frontend form
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <body style="font-family: Arial; padding: 20px;">
+        <h2>Upload Math Expression Image</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <input type="file" name="image" required />
+          <button type="submit">Solve</button>
+        </form>
+        <br />
+        <h2>Solve via Text</h2>
+        <form id="textForm">
+          <input type="text" id="expression" placeholder="e.g. 12 × 4" required />
+          <button type="submit">Solve</button>
+        </form>
+        <div id="result"></div>
+        <script>
+          const form = document.getElementById('textForm');
+          form.onsubmit = async (e) => {
+            e.preventDefault();
+            const expression = document.getElementById('expression').value;
+            const res = await fetch('/solve', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ expression })
+            });
+            const data = await res.json();
+            document.getElementById('result').innerText = 'Result: ' + (data.result ?? data.error);
+          };
+        </script>
+      </body>
+    </html>
+  `);
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
