@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // Proper use of body-parser for JSON payloads
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
